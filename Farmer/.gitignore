@@ -1,0 +1,20 @@
+node_modules/
+.expo/
+dist/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Expo
+.expo-shared/
+web-build/
+
+# Native
+android/
+ios/
+*.base64
+
+# Secrets
+.env
+.env.*
+! .env.example
