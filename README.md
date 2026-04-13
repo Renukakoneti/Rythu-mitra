@@ -34,4 +34,4 @@ To set up the entire ecosystem, follow the setup guides in each subdirectory:
 - **Hardware Interface**: Specialized IoT/Bearer token ingestion pipeline.
 
 ---
-Developed by **Dinakar Babu** for the future of sustainable farming.
+Developed by **RENUKA KONETI** for the future of sustainable farming.
