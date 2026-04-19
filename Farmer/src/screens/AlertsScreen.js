@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, Modal, RefreshControl, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  AlertCircle, AlertTriangle, Info,
-  ChevronRight, X, Droplets, Fan,
-  Trash2, Bell
+  Bell,
+  ChevronRight,
+  Trash2,
+  X
 } from 'lucide-react-native';
-import { alertService } from '../services/api';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
+import { alertService } from '../services/api';
 
 const UI_COLORS = {
   critical: Colors.critical,
@@ -33,7 +34,7 @@ const AlertsScreen = () => {
       setIsLoading(false);
       setRefreshing(false);
     }
-  };
+  }
 
   useEffect(() => {
     fetchAlerts();
