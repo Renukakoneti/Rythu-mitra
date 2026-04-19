@@ -1,5 +1,7 @@
 // RegisterScreen.js - Updated Versioimport React, { useState } from 'react';
+// RegisterScreen.js - Updated Versi
 import { ArrowRight, Phone, Volume2 } from 'lucide-react-native';
+import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
