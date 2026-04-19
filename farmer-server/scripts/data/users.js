@@ -1,13 +1,13 @@
 module.exports = {
   users: [
-    { fullName: "Dinakar Babu", phoneNumber: "9100000001", password: "password123" },
+    { fullName: "Renuka", phoneNumber: "7337066302", password: "0987654321" },
     { fullName: "Ramesh Kumar", phoneNumber: "9100000002", password: "password123" },
     { fullName: "Suresh Raina", phoneNumber: "9100000003", password: "password123" },
     { fullName: "Anita Sharma", phoneNumber: "9100000004", password: "password123" },
     { fullName: "Prakash Raj", phoneNumber: "9100000005", password: "password123" }
   ],
   devices: [
-    { name: "Field North Node", deviceId: "NODE-N-001", location: "North Field", sensor_type: "soil" },
+    { name: "North Node", deviceId: "Test_node_21", location: "Main Field", sensor_type: "climate" },
     { name: "Field South Node", deviceId: "NODE-S-002", location: "South Field", sensor_type: "soil" },
     { name: "Greenhouse Alpha", deviceId: "NODE-G-003", location: "Greenhouse", sensor_type: "climate" },
     { name: "Greenhouse Beta", deviceId: "NODE-G-004", location: "Greenhouse", sensor_type: "climate" },
