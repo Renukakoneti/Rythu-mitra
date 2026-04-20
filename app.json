@@ -21,7 +21,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.renuka.Rythu-Mitra"
+      "package": "com.renuka.rythumitra"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,8 +31,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "79e6ba94-1635-4a62-9c27-54eaceebde18"
+        "projectId": "18286dca-b174-4690-8082-f949c7e76c1c"
       }
-    }
+    },
+    "owner": "konetirenuka"
   }
 }
