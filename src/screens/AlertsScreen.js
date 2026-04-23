@@ -16,7 +16,7 @@ const AlertsScreen = () => {
   // 🔥 SENSOR ALERT LOGIC
   const generateAlerts = (data) => {
     let alerts = [];
-
+    
     // 🌱 Soil Moisture
     if (data.soil < 40) {
       alerts.push({
