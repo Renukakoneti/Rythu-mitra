@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const sensorRoutes = require('./routes/sensor');
 
 // Load environment variables
 dotenv.config();
@@ -23,6 +24,7 @@ app.use('/api/profile', require('./routes/profile'));
 app.use('/api/alerts', require('./routes/alerts'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/iot', require('./routes/iot'));
+app.use('/api/sensor', sensorRoutes);
 
 
 
