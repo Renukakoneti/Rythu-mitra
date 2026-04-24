@@ -16,7 +16,7 @@ const AlertsScreen = () => {
   // 🔥 SENSOR ALERT LOGIC
   const generateAlerts = (data) => {
     let alerts = [];
-    
+
     // 🌱 Soil Moisture
     if (data.soil < 40) {
       alerts.push({
@@ -68,7 +68,7 @@ const AlertsScreen = () => {
   // 📡 FETCH SENSOR DATA
   const fetchSensorData = async () => {
     try {
-      const res = await fetch("https://rythu-mitra-chea.onrender.com/apiL"); // 🔁 replace with your backend
+      const res = await fetch("https://rythu-mitra-chea.onrender.com/api"); // 🔁 replace with your backend
       const data = await res.json();
 
       const generatedAlerts = generateAlerts(data);
