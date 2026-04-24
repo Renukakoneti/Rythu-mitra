@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 // Replace with your computer's local IP address or 10.0.2.2 for Android Emulator
-const BASE_URL = 'https://rythu-mitra-chea.onrender.com/api';
+const BASE_URL = 'https://rythu-mitra-chea.onrender.com/api/sensor';
 
 const api = axios.create({
   baseURL: BASE_URL,

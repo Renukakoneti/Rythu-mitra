@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LineChart, BarChart } from 'react-native-chart-kit';
-import * as SecureStore from 'expo-secure-store';
-import { dashboardService } from '../services/api';
 import {
-  Activity, Zap, ShieldCheck, Thermometer,
-  Droplets, Sun, Wind, AlertCircle,
-  Cpu, Database, Waves, Gauge,
-  TrendingUp, Clock, Info
+  AlertCircle,
+  Clock,
+  Cpu, Database,
+  Gauge,
+  Info,
+  TrendingUp,
+  Waves,
+  Wind,
+  Zap
 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { BarChart, LineChart } from 'react-native-chart-kit';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
+import { dashboardService } from '../services/api';
 
 const screenWidth = Dimensions.get("window").width;
 
