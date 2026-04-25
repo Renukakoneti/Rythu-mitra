@@ -17,11 +17,27 @@ const DeviceDetailsScreen = ({ route, navigation }) => {
   const [telemetry, setTelemetry] = useState(null);
   const { deviceId, deviceName = 'Main Node' } = route.params || {};
 
+  const [telemetryHistory, setTelemetryHistory] = useState([]);
+
   const fetchDeviceData = async () => {
     try {
       setIsSyncing(true);
       const res = await telemetryService.getLatest(deviceId);
-      setTelemetry(res.data);
+      
+      const mockRes = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
+      const data = await mockRes.json();
+      
+      const formattedData = {
+         ...res.data,
+         soil_moisture: data.soil,
+         temperature: data.temperature,
+         humidity: data.humidity,
+         co2_ppm: data.gas,
+         timestamp: Date.now()
+      };
+      
+      setTelemetry(formattedData);
+      setTelemetryHistory([formattedData.soil_moisture]);
     } catch (err) {
       console.error("Failed to fetch device details:", err);
     } finally {
@@ -31,6 +47,30 @@ const DeviceDetailsScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     fetchDeviceData();
+    
+    const interval = setInterval(async () => {
+      try {
+        const mockRes = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
+        const data = await mockRes.json();
+        
+        setTelemetry(prev => ({
+           ...prev,
+           soil_moisture: data.soil,
+           temperature: data.temperature,
+           humidity: data.humidity,
+           co2_ppm: data.gas,
+           timestamp: Date.now()
+        }));
+        
+        setTelemetryHistory(prev => {
+           const newHistory = [...prev, data.soil];
+           if (newHistory.length > 6) newHistory.shift();
+           return newHistory;
+        });
+      } catch(e) {}
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, [deviceId]);
 
   const chartConfig = {
@@ -126,8 +166,8 @@ const DeviceDetailsScreen = ({ route, navigation }) => {
             <Text className="text-secondary font-black text-sm uppercase tracking-tighter mb-4">Resource Analytics (Real-time)</Text>
             <LineChart
               data={{
-                labels: ["Now"],
-                datasets: [{ data: [telemetry?.soil_moisture || 0] }]
+                labels: telemetryHistory.map((_, i) => i === telemetryHistory.length - 1 ? "Now" : ""),
+                datasets: [{ data: telemetryHistory.length > 0 ? telemetryHistory : [0] }]
               }}
               width={screenWidth - 48}
               height={220}

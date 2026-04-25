@@ -30,9 +30,27 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
-    await storage.setItemAsync('userLanguage', selectedLanguage);
-    Alert.alert('Success', 'Account Created Successfully!');
-    navigation.navigate('Login');
+    try {
+      // 1. Save language preference locally
+      await storage.setItemAsync('userLanguage', selectedLanguage);
+
+      // 2. Call API to save in DB
+      const userData = {
+        fullName: name,
+        phoneNumber,
+        password,
+        alertMode: selectedLanguage
+      };
+      
+      const { authService } = require('../services/api');
+      await authService.register(userData);
+
+      Alert.alert('Success', 'Account Created Successfully!');
+      navigation.navigate('Login');
+    } catch (err) {
+      console.log('Registration error:', err);
+      Alert.alert('Error', err?.response?.data?.message || 'Registration failed');
+    }
   };
 
   return (

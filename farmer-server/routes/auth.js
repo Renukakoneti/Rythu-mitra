@@ -10,7 +10,7 @@ const auth = require('../middleware/auth');
 // @desc    Register a user
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, password, phoneNumber } = req.body;
+    const { fullName, password, phoneNumber, alertMode } = req.body;
 
     let user = await User.findOne({ phoneNumber });
     if (user) {
@@ -20,7 +20,8 @@ router.post('/register', async (req, res) => {
     user = new User({
       fullName,
       password,
-      phoneNumber
+      phoneNumber,
+      alertMode: alertMode || 'Telugu'
     });
 
     const salt = await bcrypt.genSalt(10);

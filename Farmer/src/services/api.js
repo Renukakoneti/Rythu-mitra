@@ -15,6 +15,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await storage.getItemAsync('userToken');
+    console.log("TOKEN VALUE:", token);
     if (token) {
       config.headers['x-auth-token'] = token;
     }

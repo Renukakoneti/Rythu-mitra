@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Modal, TouchableOpacity } from 'react-native';
 import * as Speech from 'expo-speech';
 import { Volume2 } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { Modal, Text, TouchableOpacity, View } from 'react-native';
 import { storage } from '../utils/storage';
 
 export const generateGlobalAlerts = (data, language) => {
@@ -9,48 +9,35 @@ export const generateGlobalAlerts = (data, language) => {
 
   const isTelugu = language === 'Telugu' || language === 'Voice AI';
 
+  // Include data (temperature, humidity, soil moisture)
+  const sensorInfoEn = `Temperature: ${data.temperature}°C, Humidity: ${data.humidity}%, Soil: ${data.soil}%`;
+  const sensorInfoTe = `ఉష్ణోగ్రత: ${data.temperature}°C, తేమ: ${data.humidity}%, నేల తేమ: ${data.soil}%`;
+
   // 🌱 Soil Moisture
   if (data.soil < 40) {
     alerts.push({
       _id: "soil",
-      title: isTelugu ? "మట్టి తేమ తక్కువ" : "Soil Moisture Low",
-      message: isTelugu ? "మట్టి తేమ తక్కువగా ఉంది. దీనివల్ల మొక్కలు ఎండిపోతాయి. వెంటనే నీరు పోయండి!" : "Soil moisture is low. Plants may dry out. Please water them immediately!"
+      title: isTelugu ? "🚨 హెచ్చరిక!" : "🚨 Alert!",
+      message: isTelugu 
+        ? `నేల తేమ తగ్గింది. నీరు ఇవ్వండి.\n\n${sensorInfoTe}` 
+        : `Soil moisture is low. Please irrigate your field.\n\n${sensorInfoEn}`,
+      speakMessage: isTelugu
+        ? `హెచ్చరిక! నేల తేమ తగ్గింది. దయచేసి నీరు ఇవ్వండి.`
+        : `Alert! Soil moisture is low. Please irrigate your field.`
     });
   }
 
   // 🌡 Temperature
-  if (data.temperature > 35) {
+  else if (data.temperature > 35) {
     alerts.push({
       _id: "temp",
-      title: isTelugu ? "అధిక ఉష్ణోగ్రత" : "High Temperature",
-      message: isTelugu ? "ఉష్ణోగ్రత ఎక్కువగా ఉంది. దీనివల్ల మొక్కలు నీరు కోల్పోతాయి. నీరు పోయండి!" : "High temperature detected. Plants will lose water quickly. Please irrigate!"
-    });
-  }
-
-  // 💧 Humidity
-  if (data.humidity < 30) {
-    alerts.push({
-      _id: "humidity",
-      title: isTelugu ? "తక్కువ తేమ" : "Low Humidity",
-      message: isTelugu ? "గాలి తేమ తక్కువగా ఉంది! దీనివల్ల ఆకులు ఎండిపోతాయి. తేమ పెంచండి." : "Low humidity in the air! Leaves may dry out. Please increase moisture."
-    });
-  }
-
-  // 🌧 Rain
-  if (data.rain === 1) {
-    alerts.push({
-      _id: "rain",
-      title: isTelugu ? "వర్షం పడుతోంది" : "Rain Detected",
-      message: isTelugu ? "వర్షం పడుతోంది! నీటి వ్యవస్థ ఆపండి." : "Rain detected! Stop the irrigation system."
-    });
-  }
-
-  // 🔥 Gas / Smoke
-  if (data.gas > 300) {
-    alerts.push({
-      _id: "gas",
-      title: isTelugu ? "పొగ గుర్తించబడింది" : "Smoke Detected",
-      message: isTelugu ? "పొగ గుర్తించబడింది! ప్రమాదం ఉండవచ్చు. వెంటనే చెక్ చేయండి!" : "Smoke detected! Possible hazard. Check the field immediately!"
+      title: isTelugu ? "🚨 హెచ్చరిక (అధిక ఉష్ణోగ్రత)!" : "🚨 Alert (High Temp)!",
+      message: isTelugu 
+        ? `ఉష్ణోగ్రత ఎక్కువగా ఉంది. పంట కాపాడండి.\n\n${sensorInfoTe}`
+        : `High temperature detected. Please protect the crops.\n\n${sensorInfoEn}`,
+      speakMessage: isTelugu
+        ? `ఉష్ణోగ్రత ఎక్కువగా ఉంది. పంట కాపాడండి.`
+        : `High temperature detected. Please protect the crops.`
     });
   }
 
@@ -82,8 +69,8 @@ const GlobalAlertHandler = () => {
           setModalVisible(true);
 
           if (lang === 'Voice AI') {
-            Speech.speak(latestAlert.message, {
-              language: 'te-IN',
+            Speech.speak(latestAlert.speakMessage, {
+              language: lang === 'English' ? 'en-US' : 'te-IN',
               pitch: 1.0,
               rate: 0.9,
             });
@@ -111,8 +98,8 @@ const GlobalAlertHandler = () => {
     return () => clearInterval(interval);
   }, [lastAlertId]);
 
-  const speakAlert = (message) => {
-    Speech.speak(message, {
+  const speakAlert = (alertItem) => {
+    Speech.speak(alertItem.speakMessage, {
       language: userLanguage === 'English' ? 'en-US' : 'te-IN',
       pitch: 1.0,
       rate: 0.9,
@@ -131,13 +118,13 @@ const GlobalAlertHandler = () => {
             {userLanguage === 'English' ? 'ALERT!' : 'అలర్ట్!'}
           </Text>
 
-          <Text className="text-xl text-center mt-6 font-bold">
+          <Text className="text-xl text-center mt-6 font-bold text-gray-800">
             {currentAlert?.message}
           </Text>
 
           {/* Voice Button */}
           <TouchableOpacity
-            onPress={() => speakAlert(currentAlert?.message)}
+            onPress={() => speakAlert(currentAlert)}
             className="bg-green-600 w-full py-5 rounded-2xl mt-8 flex-row justify-center items-center"
           >
             <Volume2 size={24} color="white" />

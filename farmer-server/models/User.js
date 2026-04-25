@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema({
     enum: ['farmer', 'admin'],
     default: 'farmer'
   },
+  alertMode: {
+    type: String,
+    enum: ['Telugu', 'English', 'Voice AI'],
+    default: 'Telugu'
+  },
   createdAt: {
     type: Date,
     default: Date.now
