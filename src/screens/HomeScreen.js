@@ -66,6 +66,36 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Poll the mock API to make the graph dynamic as requested
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
+        const data = await res.json();
+        
+        setHistory(prev => {
+          const newHistory = [...prev, { 
+            timestamp: Date.now(), 
+            soil_moisture: data.soil 
+          }];
+          if (newHistory.length > 6) newHistory.shift();
+          return newHistory;
+        });
+
+        setLatestData(prev => ({
+           ...prev,
+           temperature: data.temperature,
+           humidity: data.humidity,
+           soil_moisture: data.soil,
+           co2_ppm: data.gas,
+           rain_intensity: data.rain
+        }));
+      } catch(e) {
+        console.log("Polling error dashboard:", e);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const onRefresh = React.useCallback(() => {

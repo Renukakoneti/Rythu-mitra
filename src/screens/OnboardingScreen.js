@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { Sprout, Droplets, Bell, ArrowRight } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 
@@ -41,7 +41,7 @@ const OnboardingScreen = ({ navigation }) => {
       setCurrentIndex(currentIndex + 1);
     } else {
       try {
-        await SecureStore.setItemAsync('hasCompletedOnboarding', 'true');
+        await storage.setItemAsync('hasCompletedOnboarding', 'true');
         navigation.replace('Login');
       } catch (error) {
         console.log('Error saving onboarding status:', error);

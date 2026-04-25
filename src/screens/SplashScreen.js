@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { Sprout } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 
@@ -26,8 +26,8 @@ const SplashScreen = ({ navigation }) => {
     ]).start();
 
     const checkStatus = async () => {
-      const completed = await SecureStore.getItemAsync('hasCompletedOnboarding');
-      const token = await SecureStore.getItemAsync('userToken');
+      const completed = await storage.getItemAsync('hasCompletedOnboarding');
+      const token = await storage.getItemAsync('userToken');
 
       setTimeout(() => {
         if (token) {

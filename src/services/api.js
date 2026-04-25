@@ -1,8 +1,8 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 
 // Replace with your computer's local IP address or 10.0.2.2 for Android Emulator
-const BASE_URL = 'https://rythu-mitra-chea.onrender.com/api/sensor';
+const BASE_URL = 'https://rythu-mitra-chea.onrender.com/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -14,7 +14,7 @@ const api = axios.create({
 // Add x-auth-token to every request if it exists
 api.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync('userToken');
+    const token = await storage.getItemAsync('userToken');
     if (token) {
       config.headers['x-auth-token'] = token;
     }

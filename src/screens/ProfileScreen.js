@@ -6,7 +6,7 @@ import {
   ChevronRight, Save, X, LogOut,
   Settings2, Activity, RefreshCw
 } from 'lucide-react-native';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { profileService, deviceService, authService } from '../services/api';
 
 import { Colors } from '../constants/Colors';
@@ -56,7 +56,7 @@ const ProfileScreen = ({ navigation }) => {
       const response = await profileService.updateProfile({ fullName: name });
       const updatedUser = response.data;
       setUserData(updatedUser);
-      await SecureStore.setItemAsync('userData', JSON.stringify(updatedUser));
+      await storage.setItemAsync('userData', JSON.stringify(updatedUser));
       setIsEditing(false);
       alert('Profile updated!');
     } catch (error) {
@@ -84,8 +84,8 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
-    await SecureStore.deleteItemAsync('userToken');
-    await SecureStore.deleteItemAsync('userData');
+    await storage.deleteItemAsync('userToken');
+    await storage.deleteItemAsync('userData');
     navigation.replace('Login');
   };
 

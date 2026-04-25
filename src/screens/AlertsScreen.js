@@ -1,79 +1,29 @@
 import * as Speech from 'expo-speech';
 import { AlertCircle, Bell, Volume2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { FlatList, Modal, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
+import { storage } from '../utils/storage';
+import { generateGlobalAlerts } from '../components/GlobalAlertHandler';
 
 const AlertsScreen = () => {
 
   const [alerts, setAlerts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [currentAlert, setCurrentAlert] = useState(null);
-  const [lastAlertId, setLastAlertId] = useState(null);
+  const [userLanguage, setUserLanguage] = useState('Telugu');
 
-  // 🔥 SENSOR ALERT LOGIC
-  const generateAlerts = (data) => {
-    let alerts = [];
-
-    // 🌱 Soil Moisture
-    if (data.soil < 40) {
-      alerts.push({
-        _id: "soil",
-        title: "Soil Moisture Low",
-        message: "మట్టి తేమ తక్కువగా ఉంది. దీనివల్ల మొక్కలు ఎండిపోతాయి. వెంటనే నీరు పోయండి!"
-      });
-    }
-
-    // 🌡 Temperature
-    if (data.temperature > 35) {
-      alerts.push({
-        _id: "temp",
-        title: "High Temperature",
-        message: "ఉష్ణోగ్రత ఎక్కువగా ఉంది. దీనివల్ల మొక్కలు నీరు కోల్పోతాయి. నీరు పోయండి!"
-      });
-    }
-
-    // 💧 Humidity
-    if (data.humidity < 30) {
-      alerts.push({
-        _id: "humidity",
-        title: "Low Humidity",
-        message: "గాలి తేమ తక్కువగా ఉంది! దీనివల్ల ఆకులు ఎండిపోతాయి. తేమ పెంచండి."
-      });
-    }
-
-    // 🌧 Rain
-    if (data.rain === 1) {
-      alerts.push({
-        _id: "rain",
-        title: "Rain Detected",
-        message: "వర్షం పడుతోంది! నీటి వ్యవస్థ ఆపండి."
-      });
-    }
-
-    // 🔥 Gas / Smoke
-    if (data.gas > 300) {
-      alerts.push({
-        _id: "gas",
-        title: "Smoke Detected",
-        message: "పొగ గుర్తించబడింది! ప్రమాదం ఉండవచ్చు. వెంటనే చెక్ చేయండి!"
-      });
-    }
-
-    return alerts;
-  };
-
-  // 📡 FETCH SENSOR DATA
+  // 📡 FETCH SENSOR DATA manually for the list
   const fetchSensorData = async () => {
     try {
-      const res = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor"); // 🔁 replace with your backend
+      const res = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
       const data = await res.json();
 
-      const generatedAlerts = generateAlerts(data);
-      setAlerts(generatedAlerts);
+      const lang = await storage.getItemAsync('userLanguage') || 'Telugu';
+      setUserLanguage(lang);
 
+      const generatedAlerts = generateGlobalAlerts(data, lang);
+      setAlerts(generatedAlerts);
     } catch (err) {
       console.log("Error:", err);
     } finally {
@@ -81,36 +31,11 @@ const AlertsScreen = () => {
     }
   };
 
-  // 🔁 AUTO FETCH EVERY 5 SEC
   useEffect(() => {
     fetchSensorData();
-
-    const interval = setInterval(() => {
-      fetchSensorData();
-    }, 5000);
-
-    return () => clearInterval(interval);
+    // Intentionally removed polling and auto-voice from this screen.
+    // The GlobalAlertHandler handles ongoing polls and modal alerts.
   }, []);
-
-  // 🚨 AUTO POPUP + VOICE
-  useEffect(() => {
-    if (alerts.length > 0) {
-      const latestAlert = alerts[0];
-
-      if (latestAlert._id !== lastAlertId) {
-        setLastAlertId(latestAlert._id);
-
-        setCurrentAlert(latestAlert);
-        setModalVisible(true);
-
-        Speech.speak(latestAlert.message, {
-          language: 'te-IN',
-          pitch: 1.0,
-          rate: 0.9,
-        });
-      }
-    }
-  }, [alerts]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -119,16 +44,10 @@ const AlertsScreen = () => {
 
   const speakAlert = (message) => {
     Speech.speak(message, {
-      language: 'te-IN',
+      language: userLanguage === 'English' ? 'en-US' : 'te-IN',
       pitch: 1.0,
       rate: 0.9,
     });
-  };
-
-  const showVoiceAlert = (alertItem) => {
-    setCurrentAlert(alertItem);
-    setModalVisible(true);
-    speakAlert(alertItem.message);
   };
 
   return (
@@ -140,7 +59,9 @@ const AlertsScreen = () => {
           <View className="flex-row justify-between items-center">
             <View>
               <Text className="text-slate-400 text-xs font-bold uppercase">Notifications</Text>
-              <Text className="text-3xl font-black">అలర్ట్స్</Text>
+              <Text className="text-3xl font-black">
+                {userLanguage === 'English' ? 'Alerts' : 'అలర్ట్స్'}
+              </Text>
             </View>
             <Bell size={28} color={Colors.primary} />
           </View>
@@ -156,61 +77,26 @@ const AlertsScreen = () => {
           ListEmptyComponent={() => (
             <View className="items-center mt-20">
               <Bell size={60} color={Colors.slate300} />
-              <Text className="text-slate-400 mt-6">
-                ఇప్పుడు ఎలాంటి అలర్ట్స్ లేవు
+              <Text className="text-slate-400 mt-6 font-bold">
+                {userLanguage === 'English' ? 'There are no active alerts right now' : 'ఇప్పుడు ఎలాంటి అలర్ట్స్ లేవు'}
               </Text>
             </View>
           )}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => showVoiceAlert(item)}
-              className="mx-4 mb-4 bg-white border rounded-2xl p-5"
-            >
-              <View className="flex-row items-center">
-                <AlertCircle size={26} color="red" />
-                <View className="ml-4 flex-1">
-                  <Text className="font-bold text-lg">{item.title}</Text>
-                  <Text className="text-slate-500">{item.message}</Text>
+            <View className="mx-4 mb-4 bg-white border rounded-2xl p-5 border-slate-200 shadow-sm">
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="flex-row items-center flex-1 pr-2">
+                  <AlertCircle size={26} color="red" />
+                  <Text className="font-bold text-lg ml-3 text-red-600">{item.title}</Text>
                 </View>
+                <TouchableOpacity onPress={() => speakAlert(item.message)} className="bg-slate-100 p-2 rounded-full">
+                  <Volume2 size={20} color={Colors.primary} />
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
+              <Text className="text-slate-500 text-[15px] leading-6">{item.message}</Text>
+            </View>
           )}
         />
-
-        {/* 🚨 POPUP MODAL */}
-        <Modal visible={modalVisible} transparent animationType="slide">
-          <View className="flex-1 bg-black/70 justify-center items-center">
-            <View className="bg-white w-[90%] rounded-3xl p-8 items-center">
-
-              <Text className="text-5xl mb-2">🚨</Text>
-              <Text className="text-3xl font-black text-red-600">అలర్ట్!</Text>
-
-              <Text className="text-xl text-center mt-6 font-bold">
-                {currentAlert?.message}
-              </Text>
-
-              {/* 🔊 Voice Button */}
-              <TouchableOpacity
-                onPress={() => speakAlert(currentAlert?.message)}
-                className="bg-green-600 w-full py-5 rounded-2xl mt-8 flex-row justify-center items-center"
-              >
-                <Volume2 size={24} color="white" />
-                <Text className="text-white text-lg ml-2">
-                  🔊 వినండి
-                </Text>
-              </TouchableOpacity>
-
-              {/* Close */}
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                className="mt-5"
-              >
-                <Text className="text-gray-500">మూసివేయి</Text>
-              </TouchableOpacity>
-
-            </View>
-          </View>
-        </Modal>
 
       </SafeAreaView>
     </View>
