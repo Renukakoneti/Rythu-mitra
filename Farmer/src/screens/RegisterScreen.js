@@ -2,6 +2,7 @@
 // RegisterScreen.js - Updated Versi
 import { Eye, EyeOff, Lock, Phone, Volume2 } from 'lucide-react-native';
 import { useState } from 'react';
+import { storage } from '../utils/storage';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
@@ -19,7 +20,7 @@ const RegisterScreen = ({ navigation }) => {
     { label: 'Voice AI - తెలుగు', value: 'Voice AI' }
   ];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!name || !phoneNumber || !password) {
       Alert.alert('Error', 'All fields are required');
       return;
@@ -29,6 +30,7 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
+    await storage.setItemAsync('userLanguage', selectedLanguage);
     Alert.alert('Success', 'Account Created Successfully!');
     navigation.navigate('Login');
   };
@@ -121,6 +123,15 @@ const RegisterScreen = ({ navigation }) => {
               className="bg-green-600 py-6 rounded-3xl mt-12"
             >
               <Text className="text-white text-center font-bold text-xl">కొనసాగించండి →</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="mt-8 mb-8 items-center"
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text className="text-slate-500 font-medium text-lg">
+                ఇప్పటికే ఖాతా ఉందా? <Text className="text-green-600 font-bold">లాగిన్ చేయండి</Text>
+              </Text>
             </TouchableOpacity>
 
           </ScrollView>

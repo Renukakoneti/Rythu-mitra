@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sprout, Phone, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { authService } from '../services/api';
 import { Colors } from '../constants/Colors';
 
@@ -26,8 +26,8 @@ const LoginScreen = ({ navigation }) => {
       const { token, user } = response.data;
 
       // Save token securely
-      await SecureStore.setItemAsync('userToken', token);
-      await SecureStore.setItemAsync('userData', JSON.stringify(user));
+      await storage.setItemAsync('userToken', token);
+      await storage.setItemAsync('userData', JSON.stringify(user));
 
       navigation.replace('Main');
     } catch (error) {
