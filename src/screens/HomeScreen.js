@@ -70,7 +70,7 @@ const Dashboard = () => {
     // Poll the mock API to make the graph dynamic as requested
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://192.168.1.44:5000/api/dashboard");
+        const res = await fetch("http://192.168.1.44:5000/api/sensor");
         const data = await res.json();
         
         setHistory(prev => {
