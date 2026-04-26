@@ -71,24 +71,27 @@ const Dashboard = () => {
     const interval = setInterval(async () => {
       try {
         const res = await fetch("http://192.168.1.44:5000/api/sensor");
-        const data = await res.json();
+        const text = await res.text();   // 👈 get raw response first
+        console.log("RAW RESPONSE:", text);
+
+        const data = JSON.parse(text);
         
         setHistory(prev => {
-          const newHistory = [...prev, { 
-            timestamp: Date.now(), 
-            soil_moisture: data.soil 
+          const newHistory = [...prev, {
+            timestamp: Date.now(),
+            soil_moisture: data.soil
           }];
           if (newHistory.length > 6) newHistory.shift();
           return newHistory;
         });
 
         setLatestData(prev => ({
-           ...prev,
-           temperature: data.temperature,
-           humidity: data.humidity,
-           soil_moisture: data.soil,
-           co2_ppm: data.gas,
-           rain_intensity: data.rain
+          ...prev,
+          temperature: data.temperature,
+          humidity: data.humidity,
+          soil_moisture: data.soil,
+          co2_ppm: data.gas,
+          rain_intensity: data.rain
         }));
       } catch(e) {
         console.log("Polling error dashboard:", e);
