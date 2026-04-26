@@ -1,14 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    AlertCircle,
-    Clock,
-    Cpu, Database,
-    Gauge,
-    Info,
-    TrendingUp,
-    Waves,
-    Wind,
-    Zap
+  AlertCircle,
+  Clock,
+  Cpu, Database,
+  Gauge,
+  Info,
+  TrendingUp,
+  Waves,
+  Wind,
+  Zap
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -70,7 +70,7 @@ const Dashboard = () => {
     // Poll the mock API to make the graph dynamic as requested
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
+        const res = await fetch("http://192.168.1.44:5000/api/dashboard");
         const data = await res.json();
         
         setHistory(prev => {
