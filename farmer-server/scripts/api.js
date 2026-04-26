@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { users, devices } = require('./data/users');
 
-const API_URL = 'http://localhost:5000/api'; // Change to production URL if needed
+const API_URL = 'http://192.168.1.44:5000/api'; // Change to production URL if needed
 
 const seedViaAPI = async () => {
   console.log('🚀 Starting API-based seeding...');
