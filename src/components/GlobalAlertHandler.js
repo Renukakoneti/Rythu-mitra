@@ -1,7 +1,8 @@
 import * as Speech from 'expo-speech';
 import { Volume2 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
+import { sensorService } from '../services/api';
 import { storage } from '../utils/storage';
 
 export const generateGlobalAlerts = (data, language) => {
@@ -48,12 +49,13 @@ const GlobalAlertHandler = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentAlert, setCurrentAlert] = useState(null);
   const [lastAlertId, setLastAlertId] = useState(null);
+  const lastAlertIdRef = useRef(null);
   const [userLanguage, setUserLanguage] = useState('Telugu');
 
   const fetchSensorData = async () => {
     try {
-      const res = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
-      const data = await res.json();
+      const res = await sensorService.getLiveData();
+      const data = res.data;
 
       const lang = await storage.getItemAsync('userLanguage') || 'Telugu';
       setUserLanguage(lang);
@@ -63,7 +65,8 @@ const GlobalAlertHandler = () => {
       if (generatedAlerts.length > 0) {
         const latestAlert = generatedAlerts[0];
 
-        if (latestAlert._id !== lastAlertId) {
+        if (latestAlert._id !== lastAlertIdRef.current) {
+          lastAlertIdRef.current = latestAlert._id;
           setLastAlertId(latestAlert._id);
           setCurrentAlert(latestAlert);
           setModalVisible(true);
@@ -82,7 +85,7 @@ const GlobalAlertHandler = () => {
       }
 
     } catch (err) {
-      console.log("Global Polling Error:", err);
+      console.log("Global Polling Error:", err.message || err);
     }
   };
 
@@ -96,7 +99,7 @@ const GlobalAlertHandler = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [lastAlertId]);
+  }, []);
 
   const speakAlert = (alertItem) => {
     Speech.speak(alertItem.speakMessage, {

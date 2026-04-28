@@ -1,21 +1,21 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  AlertCircle,
-  Clock,
-  Cpu, Database,
-  Gauge,
-  Info,
-  TrendingUp,
-  Waves,
-  Wind,
-  Zap
+    AlertCircle,
+    Clock,
+    Cpu, Database,
+    Gauge,
+    Info,
+    TrendingUp,
+    Waves,
+    Wind,
+    Zap
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
-import { dashboardService } from '../services/api';
+import { dashboardService, sensorService } from '../services/api';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -67,19 +67,25 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
 
-    // Poll the mock API to make the graph dynamic as requested
+    // 📡 Real-time polling for live sensor data with faster interval
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://192.168.1.44:5000/api/sensor");
-        const text = await res.text();   // 👈 get raw response first
-        console.log("RAW RESPONSE:", text);
-
-        const data = JSON.parse(text);
+        const res = await sensorService.getLiveData();
         
+        // Validate response is JSON
+        if (!res.data || typeof res.data !== 'object') {
+          console.warn("Invalid sensor data format");
+          return;
+        }
+        
+        const data = res.data;
+        
+        console.log("📱 Live sensor update:", data);
+
         setHistory(prev => {
           const newHistory = [...prev, {
             timestamp: Date.now(),
-            soil_moisture: data.soil
+            soil_moisture: data.soil_moisture || data.soil || 0
           }];
           if (newHistory.length > 6) newHistory.shift();
           return newHistory;
@@ -87,16 +93,24 @@ const Dashboard = () => {
 
         setLatestData(prev => ({
           ...prev,
-          temperature: data.temperature,
-          humidity: data.humidity,
-          soil_moisture: data.soil,
-          co2_ppm: data.gas,
-          rain_intensity: data.rain
+          temperature: data.temperature || prev?.temperature || 0,
+          humidity: data.humidity || prev?.humidity || 0,
+          soil_moisture: data.soil_moisture || data.soil || prev?.soil_moisture || 0,
+          co2_ppm: data.co2_ppm || data.gas || prev?.co2_ppm || 0,
+          rain_intensity: data.rain_intensity || data.rain || prev?.rain_intensity || 0,
+          updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date()
         }));
       } catch(e) {
-        console.log("Polling error dashboard:", e);
+        // Silently handle errors - don't spam console with polling errors
+        if (e.response?.status === 404) {
+          console.debug("Sensor endpoint not available (404) - using dashboard data only");
+        } else if (e.message?.includes('JSON')) {
+          console.debug("Received non-JSON response from sensor endpoint");
+        } else {
+          console.debug("Sensor polling error:", e.message);
+        }
       }
-    }, 5000);
+    }, 2000); // 🚀 2 seconds for real-time updates
 
     return () => clearInterval(interval);
   }, []);
