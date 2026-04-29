@@ -1,14 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  ArrowLeft, Cpu, Thermometer, Droplets, 
-  Wind, Battery, Wifi, RefreshCw, 
-  Settings, Trash2, ShieldCheck, AlertCircle
+import {
+    AlertCircle,
+    ArrowLeft,
+    Battery,
+    Droplets,
+    RefreshCw,
+    Settings,
+    ShieldCheck,
+    Thermometer,
+    Trash2,
+    Wifi,
+    Wind
 } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { telemetryService } from '../services/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
+import { sensorService, telemetryService } from '../services/api';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -24,22 +32,30 @@ const DeviceDetailsScreen = ({ route, navigation }) => {
       setIsSyncing(true);
       const res = await telemetryService.getLatest(deviceId);
       
-      const mockRes = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
-      const data = await mockRes.json();
-      
-      const formattedData = {
-         ...res.data,
-         soil_moisture: data.soil,
-         temperature: data.temperature,
-         humidity: data.humidity,
-         co2_ppm: data.gas,
-         timestamp: Date.now()
-      };
-      
-      setTelemetry(formattedData);
-      setTelemetryHistory([formattedData.soil_moisture]);
+      try {
+        // Fetch live sensor data - gracefully handle if endpoint doesn't exist
+        const liveRes = await sensorService.getLiveData();
+        const liveData = liveRes.data;
+        
+        const formattedData = {
+           ...res.data,
+           soil_moisture: liveData?.soil_moisture || liveData?.soil || 0,
+           temperature: liveData?.temperature || 0,
+           humidity: liveData?.humidity || 0,
+           co2_ppm: liveData?.co2_ppm || liveData?.gas || 0,
+           timestamp: new Date(liveData?.updatedAt || Date.now())
+        };
+        
+        setTelemetry(formattedData);
+        setTelemetryHistory([formattedData.soil_moisture]);
+      } catch (liveDataErr) {
+        // If live sensor endpoint fails, use telemetry data as fallback
+        console.debug("Live sensor data unavailable, using telemetry only");
+        setTelemetry(res.data || {});
+        setTelemetryHistory([res.data?.soil_moisture || 0]);
+      }
     } catch (err) {
-      console.error("Failed to fetch device details:", err);
+      console.error("Failed to fetch device details:", err.message);
     } finally {
       setIsSyncing(false);
     }
@@ -48,27 +64,45 @@ const DeviceDetailsScreen = ({ route, navigation }) => {
   useEffect(() => {
     fetchDeviceData();
     
+    // 📡 Real-time polling with faster interval
     const interval = setInterval(async () => {
       try {
-        const mockRes = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
-        const data = await mockRes.json();
+        const liveRes = await sensorService.getLiveData();
+        
+        if (!liveRes.data || typeof liveRes.data !== 'object') {
+          console.debug("Invalid sensor response format");
+          return;
+        }
+        
+        const data = liveRes.data;
+        
+        console.log("📱 Live update on DeviceDetails:", data);
         
         setTelemetry(prev => ({
            ...prev,
-           soil_moisture: data.soil,
-           temperature: data.temperature,
-           humidity: data.humidity,
-           co2_ppm: data.gas,
-           timestamp: Date.now()
+           soil_moisture: data?.soil_moisture || data?.soil || prev?.soil_moisture || 0,
+           temperature: data?.temperature || prev?.temperature || 0,
+           humidity: data?.humidity || prev?.humidity || 0,
+           co2_ppm: data?.co2_ppm || data?.gas || prev?.co2_ppm || 0,
+           timestamp: new Date(data?.updatedAt || Date.now())
         }));
         
         setTelemetryHistory(prev => {
-           const newHistory = [...prev, data.soil];
+           const newHistory = [...prev, data?.soil_moisture || data?.soil || 0];
            if (newHistory.length > 6) newHistory.shift();
            return newHistory;
         });
-      } catch(e) {}
-    }, 5000);
+      } catch(e) {
+        // Silently handle errors during polling
+        if (e.response?.status === 404) {
+          console.debug("Sensor endpoint not available (404)");
+        } else if (e.message?.includes('JSON')) {
+          console.debug("Received non-JSON response from sensor endpoint");
+        } else {
+          console.debug("Polling error device details:", e.message);
+        }
+      }
+    }, 2000); // 🚀 2 seconds for real-time updates
     
     return () => clearInterval(interval);
   }, [deviceId]);

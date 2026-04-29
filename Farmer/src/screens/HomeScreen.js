@@ -15,7 +15,7 @@ import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, Toucha
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
-import { dashboardService } from '../services/api';
+import { dashboardService, sensorService } from '../services/api';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -67,33 +67,55 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
 
-    // Poll the mock API to make the graph dynamic as requested
+    // 📡 Real-time polling for live sensor data with faster interval
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("https://rythu-mitra-chea.onrender.com/api/sensor");
-        const data = await res.json();
+        const res = await sensorService.getLiveData();
         
-        setHistory(prev => {
-          const newHistory = [...prev, { 
-            timestamp: Date.now(), 
-            soil_moisture: data.soil 
-          }];
-          if (newHistory.length > 6) newHistory.shift();
-          return newHistory;
-        });
+        // Validate response is JSON
+        if (!res.data || typeof res.data !== 'object') {
+          console.warn("Invalid sensor data format");
+          return;
+        }
+        
+        const data = res.data;
+        
+        setLatestData(prev => {
+          // Check if this is actually new data
+          const isNewData = data.updatedAt && (!prev?.updatedAt || new Date(data.updatedAt) > new Date(prev.updatedAt));
+          
+          if (isNewData) {
+            setHistory(hPrev => {
+              const newHistory = [...hPrev, {
+                timestamp: data.updatedAt ? new Date(data.updatedAt) : Date.now(),
+                soil_moisture: data.soil_moisture || data.soil || 0
+              }];
+              if (newHistory.length > 10) newHistory.shift();
+              return newHistory;
+            });
+          }
 
-        setLatestData(prev => ({
-           ...prev,
-           temperature: data.temperature,
-           humidity: data.humidity,
-           soil_moisture: data.soil,
-           co2_ppm: data.gas,
-           rain_intensity: data.rain
-        }));
+          return {
+            ...prev,
+            temperature: data.temperature || prev?.temperature || 0,
+            humidity: data.humidity || prev?.humidity || 0,
+            soil_moisture: data.soil_moisture || data.soil || prev?.soil_moisture || 0,
+            co2_ppm: data.co2_ppm || data.gas || prev?.co2_ppm || 0,
+            rain_intensity: data.rain_intensity || data.rain || prev?.rain_intensity || 0,
+            updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date()
+          };
+        });
       } catch(e) {
-        console.log("Polling error dashboard:", e);
+        // Silently handle errors - don't spam console with polling errors
+        if (e.response?.status === 404) {
+          console.debug("Sensor endpoint not available (404) - using dashboard data only");
+        } else if (e.message?.includes('JSON')) {
+          console.debug("Received non-JSON response from sensor endpoint");
+        } else {
+          console.debug("Sensor polling error:", e.message);
+        }
       }
-    }, 5000);
+    }, 2000); // 🚀 2 seconds for real-time updates
 
     return () => clearInterval(interval);
   }, []);
@@ -174,7 +196,7 @@ const Dashboard = () => {
           {/* 1. MOISTURE TREND CHART */}
           <View className="bg-slate-50 rounded-[35px] p-5 mb-6 border border-slate-100">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-secondary font-black text-sm uppercase tracking-tighter">Moisture Trend (Last 6 Logs)</Text>
+              <Text className="text-secondary font-black text-sm uppercase tracking-tighter">Moisture Trend (Last 10 Logs)</Text>
               <TrendingUp size={16} color="#22c55e" />
             </View>
             <LineChart
@@ -280,26 +302,35 @@ const Dashboard = () => {
             />
           </View>
 
-          {/* NEW CONTENT: RESOURCE LOGS */}
-          <View className="bg-slate-50 rounded-[30px] p-5 mb-6 border border-slate-100">
-            <View className="flex-row items-center mb-4">
-              <Clock size={16} color={Colors.slate500} />
-              <Text className="ml-2 text-secondary font-black text-xs uppercase">Device Activity Log</Text>
-            </View>
-            <View className="space-y-3">
-              <View className="flex-row items-center justify-between">
-                <Text className="text-slate-500 text-[10px]">LATEST UPDATE</Text>
-                <Text className="text-slate-800 text-[11px] font-bold">
-                  {latestData ? `Sensors active on ${activeDevice.name}` : 'Waiting for sensor input...'}
-                </Text>
-              </View>
-              <View className="flex-row items-center justify-between">
-                <Text className="text-slate-500 text-[10px]">DEVICE STATUS</Text>
-                <Text className={`text-[11px] font-bold ${data.temperature > 0 ? 'text-success' : 'text-slate-400'}`}>
-                  {data.temperature > 0 ? 'Transmitting Data' : 'Node Disconnected'}
-                </Text>
+          {/* 3. RECENT ALERTS LOG */}
+          <View className="bg-white border border-red-50 rounded-[30px] p-5 mb-6 shadow-sm">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-secondary font-black text-sm uppercase tracking-tighter">3. Recent Critical Alerts</Text>
+              <View className="bg-red-500 px-2 py-0.5 rounded-full">
+                <Text className="text-white text-[8px] font-black">{recentAlerts.length}</Text>
               </View>
             </View>
+            
+            {recentAlerts.length > 0 ? (
+              recentAlerts.map((alert, index) => (
+                <View key={alert._id || index} className={`flex-row items-center py-3 ${index !== recentAlerts.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                  <View className={`w-8 h-8 rounded-full items-center justify-center ${alert.type === 'critical' ? 'bg-red-100' : 'bg-orange-100'}`}>
+                    <AlertCircle size={14} color={alert.type === 'critical' ? '#ef4444' : '#f59e0b'} />
+                  </View>
+                  <View className="ml-3 flex-1">
+                    <Text className="text-secondary font-bold text-[11px]" numberOfLines={1}>{alert.message}</Text>
+                    <Text className="text-slate-400 text-[9px] mt-0.5">
+                      {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {alert.type.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <View className="py-4 items-center">
+                <ShieldCheck size={20} color={Colors.success} />
+                <Text className="text-slate-400 text-[10px] font-bold mt-2 uppercase">No Critical Issues Detected</Text>
+              </View>
+            )}
           </View>
 
           {/* Sensor Diagnostics Chipset */}

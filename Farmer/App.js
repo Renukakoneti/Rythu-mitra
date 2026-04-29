@@ -13,8 +13,8 @@ export default function App() {
         <NavigationContainer>
           <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
           <AppNavigator />
+          <GlobalAlertHandler />
         </NavigationContainer>
-        <GlobalAlertHandler />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

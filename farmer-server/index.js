@@ -13,38 +13,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // ===============================
-// 🔥 GLOBAL LIVE SENSOR STORAGE
-// ===============================
-let latestSensorData = {};
-
-// ===============================
 // 🔥 LIVE SENSOR APIs (IMPORTANT)
 // ===============================
+const { updateLiveSensorData, getLatestSensorData } = require('./utils/liveState');
 
 // 📡 Hardware sends data here
 app.post('/api/sensor/data', (req, res) => {
-  latestSensorData = {
-    ...req.body,
-    updatedAt: new Date()
-  };
-
-  console.log(`📡 [${new Date().toLocaleTimeString()}] Live Sensor Update:`, {
-    moisture: req.body.soil_moisture,
-    temp: req.body.temperature,
-    device: req.body.deviceId
-  });
+  const updated = updateLiveSensorData(req.body);
+  console.log("📡 Sensor Data Received (Live):", updated);
 
   res.json({
     success: true,
     message: "Sensor data updated",
-    data: latestSensorData
+    data: updated
   });
 });
 
 // 📱 App fetches live data here (PRIMARY ENDPOINT)
 app.get('/api/sensor/data', (req, res) => {
-  // Ensure consistent response format
-  const responseData = latestSensorData.updatedAt ? latestSensorData : {
+  const latestData = getLatestSensorData();
+  const responseData = latestData.updatedAt ? latestData : {
     soil_moisture: 0,
     soil: 0,
     temperature: 0,
@@ -61,7 +49,8 @@ app.get('/api/sensor/data', (req, res) => {
 
 // Fallback endpoint for compatibility
 app.get('/api/sensor', (req, res) => {
-  res.json(latestSensorData.updatedAt ? latestSensorData : {
+  const latestData = getLatestSensorData();
+  res.json(latestData.updatedAt ? latestData : {
     soil_moisture: 0,
     soil: 0,
     temperature: 0,

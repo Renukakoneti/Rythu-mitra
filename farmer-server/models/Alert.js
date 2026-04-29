@@ -29,7 +29,13 @@ const alertSchema = new mongoose.Schema({
     type: Date,
     required: true,
     default: Date.now
-  }
+  },
+  // Sensor data snapshot at the time of alert
+  temperature: Number,
+  humidity: Number,
+  soilMoisture: Number,
+  gas: String,
+  rainDetected: Boolean
 }, {
   timestamps: true
 });

@@ -49,6 +49,10 @@ router.post('/data', async (req, res) => {
 
     await newData.save();
 
+    // 3. Update live memory state for real-time dashboard
+    const { updateLiveSensorData } = require('../utils/liveState');
+    updateLiveSensorData(req.body);
+
     // 4. AUTOMATIC ALERT SYSTEM (Intelligent Guard)
     const alerts = [];
 
@@ -115,6 +119,11 @@ router.post('/data', async (req, res) => {
         await Alert.create({
           ...alertData,
           owner: device.owner,
+          temperature,
+          humidity,
+          soilMoisture: soil_moisture,
+          gas: smoke_detected ? 'smoke_detected' : `${co2_ppm} ppm`,
+          rainDetected: rain_intensity > 5,
           timestamp: Date.now()
         });
       }

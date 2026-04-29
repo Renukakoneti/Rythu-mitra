@@ -12,6 +12,11 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": true
     },

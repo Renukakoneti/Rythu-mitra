@@ -36,7 +36,7 @@ const AlertsScreen = () => {
 
     const interval = setInterval(() => {
       fetchAlerts();
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
